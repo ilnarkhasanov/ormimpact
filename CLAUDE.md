@@ -115,7 +115,9 @@ python3.12 and python3.11 come from pyenv (`~/.pyenv/shims/python3.12`, `python3
 
 ## Conventions
 
-* Setup: `uv sync --extra dev` (pytest, Django, SQLAlchemy, sqlglot, PyYAML, mypy into `.venv`).
+* Setup: `uv sync` (the `dev` dependency group — pytest, Django, SQLAlchemy, sqlglot, PyYAML, mypy — is installed by
+  default). `uv sync` is exact: anything not in the lock or the default group is removed from `.venv`, so do not
+  `pip install` into it; add dependencies to `pyproject.toml` (both the `dev` extra and the `dev` group).
 * Tests: `uv run pytest` (37 tests, about 30 s; the oracle test needs Django, included in `dev`). Keep all tests
   green.
 * The repository is under git; commit before and after rule changes so evaluation runs can cite a revision.
