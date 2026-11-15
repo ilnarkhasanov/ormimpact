@@ -1,3 +1,8 @@
+"""Git-based features of the impact analysis (v0.1): model diffs between revisions, commit mining and evaluation
+against ground truth, the mypy/pyright layer, and the ``analyze``/``diff``/``eval`` CLI commands.
+
+Tests that need mypy or pyright are skipped when the tool is not on PATH.
+"""
 import json
 import shutil
 
@@ -15,6 +20,8 @@ from ormimpact.registry import build_registry
 
 
 def _rename_total(repo):
+    """Simulate a real developer commit in ``sa_shop``: rename ``Order.total`` to ``amount`` and fix the typed code
+    in ``app/repo.py`` and the untyped ``app/legacy.py``. Both files are the ground truth for evaluation."""
     models = repo / "app/models.py"
     models.write_text(models.read_text().replace("    total: Mapped[int]", "    amount: Mapped[int]"))
     repo_py = repo / "app/repo.py"
@@ -24,6 +31,9 @@ def _rename_total(repo):
 
 
 def test_diff_detects_rename_and_extract(sa_shop):
+    """Comparing two registries turns raw model edits back into change specs: a removed and an added field with the
+    same declaration shape become a ``rename``; a field that reappears in a new model referenced from this one
+    becomes an ``extract``; the new relationship to that model is an ``add``."""
     before = build_registry(Project(sa_shop))
     m = sa_shop / "app/models.py"
     m.write_text(m.read_text().replace("    total: Mapped[int]", "    amount: Mapped[int]")
@@ -40,6 +50,9 @@ def test_diff_detects_rename_and_extract(sa_shop):
 
 
 def test_eval_on_synthetic_history(sa_shop):
+    """End-to-end evaluation of one commit: it is mined as model-touching, its change is recovered from the diff,
+    the ground truth is the set of non-model files the commit also edited, and both the ORM-aware analysis and the
+    text-search baseline reach full recall on it."""
     init_repo(sa_shop)
     _rename_total(sa_shop)
     git(sa_shop, "commit", "-qam", "rename total to amount")
@@ -58,6 +71,8 @@ def test_eval_on_synthetic_history(sa_shop):
 
 @pytest.mark.skipif(not chk.available("mypy"), reason="mypy not installed")
 def test_eval_with_mypy_shows_blind_spot(sa_shop):
+    """The motivating example for the ORM layer: mypy finds the break in typed ``repo.py`` but not in untyped
+    ``legacy.py`` (recall 0.5); checker plus ORM layer together reach recall 1.0."""
     init_repo(sa_shop)
     _rename_total(sa_shop)
     git(sa_shop, "commit", "-qam", "rename")
@@ -74,6 +89,8 @@ def test_eval_with_mypy_shows_blind_spot(sa_shop):
 
 @pytest.mark.skipif(not chk.available("mypy"), reason="mypy not installed")
 def test_analyze_with_mypy(sa_shop):
+    """The checker layer runs mypy before and after applying the change and reports only the *new* errors; for
+    ``remove Order.total`` they are all in ``app/repo.py``."""
     r = analyze(sa_shop, parse_change("remove Order.total"), checker=CheckerSettings(tool="mypy"))
     checker_files = {f.path for f in r.findings if f.layer == "checker"}
     assert checker_files == {"app/repo.py"}
@@ -82,6 +99,7 @@ def test_analyze_with_mypy(sa_shop):
 
 @pytest.mark.skipif(not chk.available("pyright"), reason="pyright not installed")
 def test_analyze_with_pyright(sa_shop):
+    """Same as the mypy test with pyright as the checker (basic mode)."""
     (sa_shop / "pyrightconfig.json").write_text('{"typeCheckingMode": "basic"}')
     r = analyze(sa_shop, parse_change("remove Order.total"), checker=CheckerSettings(tool="pyright"))
     assert r.checker is not None
@@ -89,6 +107,7 @@ def test_analyze_with_pyright(sa_shop):
 
 
 def test_cli_analyze_json(django_shop, capsys):
+    """``ormimpact analyze -f json`` exits 0 and prints a JSON report with a summary and the parsed change."""
     rc = main(["analyze", str(django_shop), "-c", "remove Order.status", "--checker", "none", "-f", "json"])
     assert rc == 0
     data = json.loads(capsys.readouterr().out)
@@ -97,6 +116,8 @@ def test_cli_analyze_json(django_shop, capsys):
 
 
 def test_cli_diff_and_history(django_shop, capsys):
+    """``ormimpact diff`` infers the rename from the uncommitted working tree; the two earlier commits that touched
+    ``models.py`` and ``serializers.py`` together give the history (co-change) layer something to report."""
     init_repo(django_shop)
     # history: views and serializers changed together with models twice
     for i in range(2):
@@ -115,6 +136,8 @@ def test_cli_diff_and_history(django_shop, capsys):
 
 
 def test_cli_eval(sa_shop, capsys, tmp_path):
+    """``ormimpact eval --mine`` finds and evaluates the one model-touching commit and writes a JSON result whose
+    configurations are among the known ones (``CONFIGS``)."""
     init_repo(sa_shop)
     _rename_total(sa_shop)
     git(sa_shop, "commit", "-qam", "rename")
