@@ -19,6 +19,11 @@ checkers = ["mypy>=1.8"]
 all = ["sqlglot>=20", "pyyaml>=6", "mypy>=1.8"]
 dev = ["pytest>=7", "sqlglot>=20", "pyyaml>=6", "mypy>=1.8", "sqlalchemy>=2", "django>=4.2"]
 
+# uv installs the `dev` group on every plain `uv sync` / `uv run`, so the environment no longer loses the test
+# dependencies when something syncs without `--extra dev`. Keep in sync with the `dev` extra above (used by pip).
+[dependency-groups]
+dev = ["pytest>=7", "sqlglot>=20", "pyyaml>=6", "mypy>=1.8", "sqlalchemy>=2", "django>=4.2"]
+
 [project.scripts]
 ormimpact = "ormimpact.cli:main"
 
