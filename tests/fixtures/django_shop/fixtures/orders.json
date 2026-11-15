@@ -1,0 +1,4 @@
+[
+  {"model": "shop.customer", "pk": 1, "fields": {"name": "Ann", "email": "a@x.io"}},
+  {"model": "shop.order", "pk": 1, "fields": {"customer": 1, "delivery_address": "Main st", "total": 10, "status": "new"}}
+]

@@ -1,0 +1,51 @@
+
+== all evaluated commits: commits 15, evaluated 7, with ground truth 5
+
+configuration                 TP     FP    FN  P(micro) R(micro)      F1  P(macro) R(macro)
+checker (L1)                   2      1    13     66.7%    13.3%   22.2%     50.0%    20.0%
+orm-aware (L2)                 2      1    13     66.7%    13.3%   22.2%     66.7%    20.0%
+sql+data+templates (L3)        0      1    15      0.0%     0.0%     -        0.0%     0.0%
+co-change (L4)                 0      2    15      0.0%     0.0%     -        0.0%     0.0%
+text baseline                  2     74    13      2.6%    13.3%    4.4%      2.6%    20.0%
+L1+L2                          2      2    13     50.0%    13.3%   21.1%     33.3%    20.0%
+L1+L2+L3                       2      3    13     40.0%    13.3%   20.0%     25.0%    20.0%
+L1+L2+L3+L4                    2      5    13     28.6%    13.3%   18.2%     13.3%    20.0%
+L2+L3 (no checker)             2      2    13     50.0%    13.3%   21.1%     50.0%    20.0%
+
+== breaking changes: commits 2, evaluated 2, with ground truth 1
+
+configuration                 TP     FP    FN  P(micro) R(micro)      F1  P(macro) R(macro)
+checker (L1)                   2      0     0    100.0%   100.0%  100.0%    100.0%   100.0%
+orm-aware (L2)                 2      1     0     66.7%   100.0%   80.0%     66.7%   100.0%
+sql+data+templates (L3)        0      1     2      0.0%     0.0%     -        0.0%     0.0%
+co-change (L4)                 0      1     2      0.0%     0.0%     -        0.0%     0.0%
+text baseline                  2     74     0      2.6%   100.0%    5.1%      2.6%   100.0%
+L1+L2                          2      1     0     66.7%   100.0%   80.0%     66.7%   100.0%
+L1+L2+L3                       2      2     0     50.0%   100.0%   66.7%     50.0%   100.0%
+L1+L2+L3+L4                    2      3     0     40.0%   100.0%   57.1%     40.0%   100.0%
+L2+L3 (no checker)             2      2     0     50.0%   100.0%   66.7%     50.0%   100.0%
+
+== add-only changes: commits 5, evaluated 5, with ground truth 4
+
+configuration                 TP     FP    FN  P(micro) R(micro)      F1  P(macro) R(macro)
+checker (L1)                   0      1    13      0.0%     0.0%     -        0.0%     0.0%
+orm-aware (L2)                 0      0    13       -       0.0%     -         -       0.0%
+sql+data+templates (L3)        0      0    13       -       0.0%     -         -       0.0%
+co-change (L4)                 0      1    13      0.0%     0.0%     -        0.0%     0.0%
+text baseline                  0      0    13       -       0.0%     -         -       0.0%
+L1+L2                          0      1    13      0.0%     0.0%     -        0.0%     0.0%
+L1+L2+L3                       0      1    13      0.0%     0.0%     -        0.0%     0.0%
+L1+L2+L3+L4                    0      2    13      0.0%     0.0%     -        0.0%     0.0%
+L2+L3 (no checker)             0      0    13       -       0.0%     -         -       0.0%
+
+== file-level precision per detector kind (top 25)
+
+kind                                                TP    FP       P  commits
+text:identifier                                      2    74    2.6%        1
+checker:mypy                                         2     1   66.7%        2
+history:co-change                                    0     2    0.0%        2
+orm:create-kwarg                                     2     0  100.0%        1
+config:exclude                                       0     1    0.0%        1
+template:template-attribute                          0     1    0.0%        1
+
+results written to /home/claude/real/hc_mypy.json

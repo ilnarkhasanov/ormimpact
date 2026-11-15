@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ormimpact"
+version = "0.2.0"
+description = "ORM-aware impact analysis for domain-model changes in Django and SQLAlchemy projects, combined with mypy/pyright output"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Ilnar" }]
+dependencies = []
+
+[project.optional-dependencies]
+sql = ["sqlglot>=20"]
+yaml = ["pyyaml>=6"]
+checkers = ["mypy>=1.8"]
+all = ["sqlglot>=20", "pyyaml>=6", "mypy>=1.8"]
+dev = ["pytest>=7", "sqlglot>=20", "pyyaml>=6", "mypy>=1.8", "sqlalchemy>=2", "django>=4.2"]
+
+[project.scripts]
+ormimpact = "ormimpact.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

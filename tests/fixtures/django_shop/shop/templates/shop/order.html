@@ -1,0 +1,4 @@
+<h1>Order {{ order.id }}</h1>
+<p>Total: {{ order.total }}</p>
+<p>{{ order.customer.name }}</p>
+{% for o in customer.orders.all %}{{ o.status }}{% endfor %}

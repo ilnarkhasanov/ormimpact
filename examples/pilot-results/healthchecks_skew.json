@@ -1,0 +1,1520 @@
+{
+  "aggregate": {
+    "commits": 19,
+    "with_schema_ops": 19,
+    "static": {
+      "pair_a_breaks": 7,
+      "pair_b_breaks": 12,
+      "linter_flags": 11,
+      "no_safe_order": 5
+    },
+    "pair_a": {
+      "labelled": 19,
+      "oracle_breaks": 7,
+      "static (breaks)": {
+        "tp": 7,
+        "fp": 0,
+        "fn": 0,
+        "tn": 12,
+        "precision": 1.0,
+        "recall": 1.0,
+        "accuracy": 1.0
+      },
+      "static (breaks or risky)": {
+        "tp": 7,
+        "fp": 4,
+        "fn": 0,
+        "tn": 8,
+        "precision": 0.6363636363636364,
+        "recall": 1.0,
+        "accuracy": 0.7894736842105263
+      },
+      "linter": {
+        "tp": 7,
+        "fp": 4,
+        "fn": 0,
+        "tn": 8,
+        "precision": 0.6363636363636364,
+        "recall": 1.0,
+        "accuracy": 0.7894736842105263
+      }
+    },
+    "pair_b": {
+      "labelled": 19,
+      "oracle_breaks": 11,
+      "static (breaks)": {
+        "tp": 11,
+        "fp": 1,
+        "fn": 0,
+        "tn": 7,
+        "precision": 0.9166666666666666,
+        "recall": 1.0,
+        "accuracy": 0.9473684210526315
+      },
+      "static (breaks or risky)": {
+        "tp": 11,
+        "fp": 1,
+        "fn": 0,
+        "tn": 7,
+        "precision": 0.9166666666666666,
+        "recall": 1.0,
+        "accuracy": 0.9473684210526315
+      },
+      "linter (same flag)": {
+        "tp": 5,
+        "fp": 6,
+        "fn": 6,
+        "tn": 2,
+        "precision": 0.45454545454545453,
+        "recall": 0.45454545454545453,
+        "accuracy": 0.3684210526315789
+      }
+    }
+  },
+  "commits": [
+    {
+      "sha": "6ab5df351633d5c360d7ad3242e10be9a91477c2",
+      "subject": "Remove Profile.team_limit database field",
+      "date": "2026-02-18T09:34:36+02:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "drop column accounts_profile.team_limit"
+      ],
+      "static_a": "breaks",
+      "static_b": "breaks",
+      "linter": true,
+      "linter_rules": [
+        "DROP_COLUMN"
+      ],
+      "oracle_a": "breaks",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 1480,
+      "oracle_fail_b": 1480,
+      "recommendation": "no safe order: split the change into several releases (see the fixes)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "drop_column",
+            "table": "accounts_profile",
+            "column": "team_limit",
+            "model": "Profile",
+            "field": "team_limit",
+            "path": "hc/accounts/migrations/0052_remove_profile_team_limit.py",
+            "line": 13,
+            "text": "migrations.RemoveField(",
+            "description": "drop column accounts_profile.team_limit"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N still maps accounts_profile.team_limit (Profile.team_limit); the ORM selects every mapped column, so queries on Profile fail once the column is gone",
+          "code_dependent": true,
+          "fix": "Split into two releases: first stop mapping the column (Django: SeparateDatabaseAndState with state_operations=[RemoveField(...)] and no database operation; SQLAlchemy: remove the attribute, keep the column), deploy; then drop the column in the next release.",
+          "evidence": [
+            {
+              "path": "hc/accounts/models.py",
+              "line": 93,
+              "text": "Profile.team_limit maps accounts_profile.team_limit",
+              "kind": "model"
+            }
+          ]
+        },
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "drop_column",
+            "table": "accounts_profile",
+            "column": "team_limit",
+            "model": "Profile",
+            "field": "team_limit",
+            "path": "hc/accounts/migrations/0052_remove_profile_team_limit.py",
+            "line": 13,
+            "text": "migrations.RemoveField(",
+            "description": "drop column accounts_profile.team_limit"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "accounts_profile.team_limit is NOT NULL without a database default until the migration runs, and version N+1 no longer sets it when inserting Profile rows",
+          "code_dependent": true,
+          "fix": "Make the column nullable (or give it a database default) one release before the new code stops writing it.",
+          "evidence": [
+            {
+              "path": "hc/accounts/models.py",
+              "line": 93,
+              "text": "Profile.team_limit maps accounts_profile.team_limit",
+              "kind": "model"
+            },
+            {
+              "path": "hc/accounts/models.py",
+              "line": 64,
+              "text": "profile = Profile(user=user)",
+              "kind": "dynamic:constructor-missing-new-field"
+            }
+          ]
+        }
+      ],
+      "seconds": 7.1
+    },
+    {
+      "sha": "0f78e117eadb59a01dd51e09344479fa3eeb4187",
+      "subject": "Add Check.filter_http_body and Check.filter_default_false DB fields",
+      "date": "2025-11-26T16:00:16+02:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column api_check.filter_default_fail (NOT NULL)",
+        "add column api_check.filter_http_body (NOT NULL)"
+      ],
+      "static_a": "breaks",
+      "static_b": "breaks",
+      "linter": true,
+      "linter_rules": [
+        "NOT_NULL"
+      ],
+      "oracle_a": "breaks",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 997,
+      "oracle_fail_b": 1054,
+      "recommendation": "no safe order: split the change into several releases (see the fixes)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_check",
+            "column": "filter_default_fail",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "BooleanField",
+            "unique": false,
+            "model": "Check",
+            "field": "filter_default_fail",
+            "path": "hc/api/migrations/0119_check_filter_default_fail_check_filter_http_body_and_more.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column api_check.filter_default_fail (NOT NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N inserts Check rows without filter_default_fail, which becomes NOT NULL without a database default (7 creation sites outside tests)",
+          "code_dependent": true,
+          "fix": "Add the column as nullable or with a database default (Django >= 5.0: db_default; SQLAlchemy: server_default), backfill, and add NOT NULL in a later release.",
+          "evidence": [
+            {
+              "path": "hc/accounts/management/commands/senddeletionscheduled.py",
+              "line": 50,
+              "text": "dummy = Check(name=name, desc=desc, status=\"down\", project=channel.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/accounts/views.py",
+              "line": 88,
+              "text": "check = Check(project=project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/api/views.py",
+              "line": 250,
+              "text": "check = Check(project=project, name=slug, slug=slug)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/api/views.py",
+              "line": 422,
+              "text": "check = Check(project=request.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 537,
+              "text": "check = Check(project=project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1070,
+              "text": "copied = Check(project=check.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1282,
+              "text": "dummy = Check(name=\"TEST\", status=\"down\", project=channel.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            }
+          ]
+        },
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_check",
+            "column": "filter_default_fail",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "BooleanField",
+            "unique": false,
+            "model": "Check",
+            "field": "filter_default_fail",
+            "path": "hc/api/migrations/0119_check_filter_default_fail_check_filter_http_body_and_more.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column api_check.filter_default_fail (NOT NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps api_check.filter_default_fail (Check.filter_default_fail), which does not exist before the migration; every query on Check fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 202,
+              "text": "Check.filter_default_fail maps api_check.filter_default_fail",
+              "kind": "model"
+            }
+          ]
+        },
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_check",
+            "column": "filter_http_body",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "BooleanField",
+            "unique": false,
+            "model": "Check",
+            "field": "filter_http_body",
+            "path": "hc/api/migrations/0119_check_filter_default_fail_check_filter_http_body_and_more.py",
+            "line": 18,
+            "text": "migrations.AddField(",
+            "description": "add column api_check.filter_http_body (NOT NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N inserts Check rows without filter_http_body, which becomes NOT NULL without a database default (7 creation sites outside tests)",
+          "code_dependent": true,
+          "fix": "Add the column as nullable or with a database default (Django >= 5.0: db_default; SQLAlchemy: server_default), backfill, and add NOT NULL in a later release.",
+          "evidence": [
+            {
+              "path": "hc/accounts/management/commands/senddeletionscheduled.py",
+              "line": 50,
+              "text": "dummy = Check(name=name, desc=desc, status=\"down\", project=channel.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/accounts/views.py",
+              "line": 88,
+              "text": "check = Check(project=project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/api/views.py",
+              "line": 250,
+              "text": "check = Check(project=project, name=slug, slug=slug)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/api/views.py",
+              "line": 422,
+              "text": "check = Check(project=request.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 537,
+              "text": "check = Check(project=project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1070,
+              "text": "copied = Check(project=check.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1282,
+              "text": "dummy = Check(name=\"TEST\", status=\"down\", project=channel.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            }
+          ]
+        },
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_check",
+            "column": "filter_http_body",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "BooleanField",
+            "unique": false,
+            "model": "Check",
+            "field": "filter_http_body",
+            "path": "hc/api/migrations/0119_check_filter_default_fail_check_filter_http_body_and_more.py",
+            "line": 18,
+            "text": "migrations.AddField(",
+            "description": "add column api_check.filter_http_body (NOT NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps api_check.filter_http_body (Check.filter_http_body), which does not exist before the migration; every query on Check fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 201,
+              "text": "Check.filter_http_body maps api_check.filter_http_body",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 6.3
+    },
+    {
+      "sha": "bf97e3967c13ddabb742ed6f4e34176a13cc4159",
+      "subject": "Make Check.badge_key non-nullable",
+      "date": "2024-12-27T12:47:24+02:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "alter column api_check.badge_key (nullable: True -> False)"
+      ],
+      "static_a": "risky",
+      "static_b": "safe",
+      "linter": true,
+      "linter_rules": [
+        "ALTER_COLUMN"
+      ],
+      "oracle_a": "compatible",
+      "oracle_b": "compatible",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 0,
+      "recommendation": "deploy the code first, then run the migration (post-deploy migration)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "alter_column",
+            "table": "api_check",
+            "column": "badge_key",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "UUIDField",
+            "model": "Check",
+            "field": "badge_key",
+            "path": "hc/api/migrations/0118_alter_check_badge_key.py",
+            "line": 14,
+            "text": "migrations.AlterField(",
+            "changes": {
+              "nullable": [
+                true,
+                false
+              ]
+            },
+            "description": "alter column api_check.badge_key (nullable: True -> False)"
+          },
+          "status": "risky",
+          "confidence": "medium",
+          "reason": "the column becomes NOT NULL while version N's model allows NULL",
+          "code_dependent": true,
+          "fix": "Add the column as nullable or with a database default (Django >= 5.0: db_default; SQLAlchemy: server_default), backfill, and add NOT NULL in a later release.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 198,
+              "text": "Check.badge_key maps api_check.badge_key",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 3.7
+    },
+    {
+      "sha": "9edae634c78df40415fee0e80ad84b17cf65a27c",
+      "subject": "Add Flip.reason field",
+      "date": "2024-11-08T10:24:50+02:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column api_flip.reason (NOT NULL)"
+      ],
+      "static_a": "breaks",
+      "static_b": "breaks",
+      "linter": true,
+      "linter_rules": [
+        "NOT_NULL"
+      ],
+      "oracle_a": "breaks",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 102,
+      "oracle_fail_b": 124,
+      "recommendation": "no safe order: split the change into several releases (see the fixes)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_flip",
+            "column": "reason",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "CharField(max_length=8)",
+            "unique": false,
+            "model": "Flip",
+            "field": "reason",
+            "path": "hc/api/migrations/0114_flip_reason.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column api_flip.reason (NOT NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N inserts Flip rows without reason, which becomes NOT NULL without a database default (4 creation sites outside tests)",
+          "code_dependent": true,
+          "fix": "Add the column as nullable or with a database default (Django >= 5.0: db_default; SQLAlchemy: server_default), backfill, and add NOT NULL in a later release.",
+          "evidence": [
+            {
+              "path": "hc/accounts/management/commands/senddeletionscheduled.py",
+              "line": 54,
+              "text": "dummy_flip = Flip(owner=dummy)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/api/management/commands/sendalerts.py",
+              "line": 164,
+              "text": "flip = Flip(owner=check)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/api/models.py",
+              "line": 606,
+              "text": "flip = Flip(owner=self)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1333,
+              "text": "dummy_flip = Flip(owner=dummy)",
+              "kind": "dynamic:constructor-missing-new-field"
+            }
+          ]
+        },
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_flip",
+            "column": "reason",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "CharField(max_length=8)",
+            "unique": false,
+            "model": "Flip",
+            "field": "reason",
+            "path": "hc/api/migrations/0114_flip_reason.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column api_flip.reason (NOT NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps api_flip.reason (Flip.reason), which does not exist before the migration; every query on Flip fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 1158,
+              "text": "Flip.reason maps api_flip.reason",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 4.3
+    },
+    {
+      "sha": "3e5080d9eb06dc3b44aa0aec5666d4a8c6431cb6",
+      "subject": "Remove Ping.body field",
+      "date": "2024-07-11T16:34:18+03:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "drop column api_ping.body"
+      ],
+      "static_a": "breaks",
+      "static_b": "safe",
+      "linter": true,
+      "linter_rules": [
+        "DROP_COLUMN"
+      ],
+      "oracle_a": "breaks",
+      "oracle_b": "compatible",
+      "oracle_fail_a": 411,
+      "oracle_fail_b": 0,
+      "recommendation": "deploy the code first, then run the migration (post-deploy migration)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "drop_column",
+            "table": "api_ping",
+            "column": "body",
+            "model": "Ping",
+            "field": "body",
+            "path": "hc/api/migrations/0109_remove_ping_body.py",
+            "line": 13,
+            "text": "migrations.RemoveField(",
+            "description": "drop column api_ping.body"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N still maps api_ping.body (Ping.body); the ORM selects every mapped column, so queries on Ping fail once the column is gone; 8 more references to the field",
+          "code_dependent": true,
+          "fix": "Split into two releases: first stop mapping the column (Django: SeparateDatabaseAndState with state_operations=[RemoveField(...)] and no database operation; SQLAlchemy: remove the attribute, keep the column), deploy; then drop the column in the next release.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 638,
+              "text": "Ping.body maps api_ping.body",
+              "kind": "model"
+            },
+            {
+              "path": "hc/api/admin.py",
+              "line": 133,
+              "text": "exclude = (\"body\",)",
+              "kind": "config:exclude"
+            },
+            {
+              "path": "hc/front/tests/test_ping_body.py",
+              "line": 39,
+              "text": "Ping.objects.create(owner=self.check, body=\"this is body\")",
+              "kind": "orm:create-kwarg"
+            },
+            {
+              "path": "hc/front/tests/test_ping_details.py",
+              "line": 73,
+              "text": "Ping.objects.create(owner=self.check, n=1, body=\"this is body\")",
+              "kind": "orm:create-kwarg"
+            },
+            {
+              "path": "hc/front/tests/test_ping_details.py",
+              "line": 127,
+              "text": "Ping.objects.create(owner=self.check, n=1, body=\"this is body\")",
+              "kind": "orm:create-kwarg"
+            },
+            {
+              "path": "templates/front/channels.html",
+              "line": 529,
+              "text": "{% if spec.body %}",
+              "kind": "template:template-attribute"
+            },
+            {
+              "path": "templates/front/channels.html",
+              "line": 531,
+              "text": "{{ spec.body }}",
+              "kind": "template:template-attribute"
+            },
+            {
+              "path": "templates/front/channels.html",
+              "line": 545,
+              "text": "{% if spec.body %}",
+              "kind": "template:template-attribute"
+            },
+            {
+              "path": "templates/front/channels.html",
+              "line": 547,
+              "text": "{{ spec.body }}",
+              "kind": "template:template-attribute"
+            }
+          ]
+        }
+      ],
+      "seconds": 4.8
+    },
+    {
+      "sha": "12bd59b2c1e6c9af1c53391c508c291e4342b32f",
+      "subject": "Add system hostname logging in hc.logs.Handler",
+      "date": "2024-05-24T13:58:18+03:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column logs_record.host (NOT NULL)"
+      ],
+      "static_a": "breaks",
+      "static_b": "breaks",
+      "linter": true,
+      "linter_rules": [
+        "NOT_NULL"
+      ],
+      "oracle_a": "breaks",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 3,
+      "oracle_fail_b": 3,
+      "recommendation": "no safe order: split the change into several releases (see the fixes)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "add_column",
+            "table": "logs_record",
+            "column": "host",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "CharField(max_length=50)",
+            "unique": false,
+            "model": "Record",
+            "field": "host",
+            "path": "hc/logs/migrations/0002_record_host.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column logs_record.host (NOT NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N inserts Record rows without host, which becomes NOT NULL without a database default (1 creation sites outside tests)",
+          "code_dependent": true,
+          "fix": "Add the column as nullable or with a database default (Django >= 5.0: db_default; SQLAlchemy: server_default), backfill, and add NOT NULL in a later release.",
+          "evidence": [
+            {
+              "path": "hc/logs/__init__.py",
+              "line": 20,
+              "text": "Record.objects.create(",
+              "kind": "orm:create-missing-new-field"
+            }
+          ]
+        },
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "logs_record",
+            "column": "host",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "CharField(max_length=50)",
+            "unique": false,
+            "model": "Record",
+            "field": "host",
+            "path": "hc/logs/migrations/0002_record_host.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column logs_record.host (NOT NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps logs_record.host (Record.host), which does not exist before the migration; every query on Record fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/logs/models.py",
+              "line": 20,
+              "text": "Record.host maps logs_record.host",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 4.4
+    },
+    {
+      "sha": "d486d2db1474777e88da288943c0d9c751feb0af",
+      "subject": "Add uniqueness constraint to api_notification.code",
+      "date": "2024-05-17T10:30:01+03:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "alter column api_notification.code (nullable: True -> False, unique: False -> True)"
+      ],
+      "static_a": "risky",
+      "static_b": "safe",
+      "linter": true,
+      "linter_rules": [
+        "ALTER_COLUMN"
+      ],
+      "oracle_a": "compatible",
+      "oracle_b": "compatible",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 0,
+      "recommendation": "deploy the code first, then run the migration (post-deploy migration)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "alter_column",
+            "table": "api_notification",
+            "column": "code",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "UUIDField",
+            "model": "Notification",
+            "field": "code",
+            "path": "hc/api/migrations/0104_alter_notification_code.py",
+            "line": 14,
+            "text": "migrations.AlterField(",
+            "changes": {
+              "nullable": [
+                true,
+                false
+              ],
+              "unique": [
+                false,
+                true
+              ]
+            },
+            "description": "alter column api_notification.code (nullable: True -> False, unique: False -> True)"
+          },
+          "status": "risky",
+          "confidence": "medium",
+          "reason": "the column becomes NOT NULL while version N's model allows NULL",
+          "code_dependent": true,
+          "fix": "Add the column as nullable or with a database default (Django >= 5.0: db_default; SQLAlchemy: server_default), backfill, and add NOT NULL in a later release.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 1126,
+              "text": "Notification.code maps api_notification.code",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 3.5
+    },
+    {
+      "sha": "1322bb11238fcec8e896878a3cd0d4f1bac5c4a8",
+      "subject": "Add support for per-check status badges",
+      "date": "2024-02-27T12:55:51+02:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column api_check.badge_key (NULL)"
+      ],
+      "static_a": "safe",
+      "static_b": "breaks",
+      "linter": false,
+      "linter_rules": [],
+      "oracle_a": "compatible",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 929,
+      "recommendation": "migrate first, then deploy the code",
+      "verdicts": [
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_check",
+            "column": "badge_key",
+            "nullable": true,
+            "db_default": false,
+            "col_type": "UUIDField",
+            "unique": true,
+            "model": "Check",
+            "field": "badge_key",
+            "path": "hc/api/migrations/0103_check_badge_key.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column api_check.badge_key (NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps api_check.badge_key (Check.badge_key), which does not exist before the migration; every query on Check fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 195,
+              "text": "Check.badge_key maps api_check.badge_key",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 3.6
+    },
+    {
+      "sha": "1b1899052cc47bfa774ee581072414c03f4b3c18",
+      "subject": "Make payments_subscription.user_id not nullable",
+      "date": "2023-11-22T10:17:01+02:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "alter column payments_subscription.user_id (nullable: True -> False)"
+      ],
+      "static_a": "risky",
+      "static_b": "safe",
+      "linter": true,
+      "linter_rules": [
+        "ALTER_COLUMN"
+      ],
+      "oracle_a": "compatible",
+      "oracle_b": "compatible",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 0,
+      "recommendation": "deploy the code first, then run the migration (post-deploy migration)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "alter_column",
+            "table": "payments_subscription",
+            "column": "user_id",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "OneToOneField",
+            "model": "Subscription",
+            "field": "user",
+            "path": "hc/payments/migrations/0009_alter_subscription_user.py",
+            "line": 16,
+            "text": "migrations.AlterField(",
+            "changes": {
+              "nullable": [
+                true,
+                false
+              ]
+            },
+            "description": "alter column payments_subscription.user_id (nullable: True -> False)"
+          },
+          "status": "risky",
+          "confidence": "medium",
+          "reason": "the column becomes NOT NULL while version N's model allows NULL",
+          "code_dependent": true,
+          "fix": "Add the column as nullable or with a database default (Django >= 5.0: db_default; SQLAlchemy: server_default), backfill, and add NOT NULL in a later release.",
+          "evidence": [
+            {
+              "path": "hc/payments/models.py",
+              "line": 8,
+              "text": "Subscription.user maps payments_subscription.user_id",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 4.4
+    },
+    {
+      "sha": "c18d2ea1ddf51278a3dbb57cfff5b1013dbc4f15",
+      "subject": "Update logging configuration to write logs to database",
+      "date": "2023-11-01T09:34:45+02:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "create table logs_record"
+      ],
+      "static_a": "safe",
+      "static_b": "breaks",
+      "linter": false,
+      "linter_rules": [],
+      "oracle_a": "compatible",
+      "oracle_b": "compatible",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 0,
+      "recommendation": "migrate first, then deploy the code",
+      "verdicts": [
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "create_table",
+            "table": "logs_record",
+            "model": "Record",
+            "path": "hc/logs/migrations/0001_initial.py",
+            "line": 14,
+            "text": "migrations.CreateModel(",
+            "description": "create table logs_record"
+          },
+          "status": "breaks",
+          "confidence": "medium",
+          "reason": "version N+1 uses Record on table logs_record, which does not exist yet",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/logs/models.py",
+              "line": 18,
+              "text": "Record maps table logs_record",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 3.0
+    },
+    {
+      "sha": "a308997b3a8617cbe970ffe701156265c5b8ab68",
+      "subject": "Remove most of the hc.payments stuff",
+      "date": "2023-10-19T14:17:44+03:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column payments_subscription.next_billing_date (NULL)",
+        "add column payments_subscription.renew_notice_date (NULL)",
+        "add column payments_subscription.setup_date (NULL)"
+      ],
+      "static_a": "safe",
+      "static_b": "safe",
+      "linter": false,
+      "linter_rules": [],
+      "oracle_a": "compatible",
+      "oracle_b": "compatible",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 0,
+      "recommendation": "migrate first, then deploy the code",
+      "verdicts": [],
+      "seconds": 2.9
+    },
+    {
+      "sha": "4147bd951d9c697f7f140b455297c4cc032d7c96",
+      "subject": "Make Channel.disabled non-nullable",
+      "date": "2023-08-29T16:29:29+03:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "alter column api_channel.disabled (nullable: True -> False)"
+      ],
+      "static_a": "breaks",
+      "static_b": "safe",
+      "linter": true,
+      "linter_rules": [
+        "ALTER_COLUMN"
+      ],
+      "oracle_a": "breaks",
+      "oracle_b": "compatible",
+      "oracle_fail_a": 428,
+      "oracle_fail_b": 0,
+      "recommendation": "deploy the code first, then run the migration (post-deploy migration)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "alter_column",
+            "table": "api_channel",
+            "column": "disabled",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "BooleanField",
+            "model": "Channel",
+            "field": "disabled",
+            "path": "hc/api/migrations/0099_alter_channel_disabled.py",
+            "line": 13,
+            "text": "migrations.AlterField(",
+            "changes": {
+              "nullable": [
+                true,
+                false
+              ]
+            },
+            "description": "alter column api_channel.disabled (nullable: True -> False)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "the column becomes NOT NULL, and version N creates Channel rows without setting disabled (no default, so it writes NULL)",
+          "code_dependent": true,
+          "fix": "Add the column as nullable or with a database default (Django >= 5.0: db_default; SQLAlchemy: server_default), backfill, and add NOT NULL in a later release.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 695,
+              "text": "Channel.disabled maps api_channel.disabled",
+              "kind": "model"
+            },
+            {
+              "path": "hc/accounts/views.py",
+              "line": 86,
+              "text": "channel = Channel(project=project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1274,
+              "text": "channel = Channel(project=project, kind=\"email\")",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1337,
+              "text": "channel = Channel(project=project, kind=\"webhook\")",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1348,
+              "text": "channel = Channel(project=project, kind=\"shell\")",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1388,
+              "text": "channel = Channel(project=project, kind=\"pd\")",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1417,
+              "text": "channel = Channel(kind=\"pd\", project=project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1444,
+              "text": "channel = Channel(project=project, kind=\"pagertree\")",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1465,
+              "text": "channel = Channel(project=project, kind=\"slack\")",
+              "kind": "dynamic:constructor-missing-new-field"
+            }
+          ]
+        }
+      ],
+      "seconds": 4.1
+    },
+    {
+      "sha": "47ec070aeef3790eb312b744afb66863eab17f9e",
+      "subject": "Make Profile.user non-nullable",
+      "date": "2023-08-29T16:19:08+03:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "alter column accounts_profile.user_id (nullable: True -> False)"
+      ],
+      "static_a": "risky",
+      "static_b": "safe",
+      "linter": true,
+      "linter_rules": [
+        "ALTER_COLUMN"
+      ],
+      "oracle_a": "compatible",
+      "oracle_b": "compatible",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 0,
+      "recommendation": "deploy the code first, then run the migration (post-deploy migration)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "alter_column",
+            "table": "accounts_profile",
+            "column": "user_id",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "OneToOneField",
+            "model": "Profile",
+            "field": "user",
+            "path": "hc/accounts/migrations/0048_alter_profile_user.py",
+            "line": 16,
+            "text": "migrations.AlterField(",
+            "changes": {
+              "nullable": [
+                true,
+                false
+              ]
+            },
+            "description": "alter column accounts_profile.user_id (nullable: True -> False)"
+          },
+          "status": "risky",
+          "confidence": "medium",
+          "reason": "the column becomes NOT NULL while version N's model allows NULL",
+          "code_dependent": true,
+          "fix": "Add the column as nullable or with a database default (Django >= 5.0: db_default; SQLAlchemy: server_default), backfill, and add NOT NULL in a later release.",
+          "evidence": [
+            {
+              "path": "hc/accounts/models.py",
+              "line": 67,
+              "text": "Profile.user maps accounts_profile.user_id",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 4.6
+    },
+    {
+      "sha": "368e76016d49dc4cf85a5dffc274aef86dd997ef",
+      "subject": "Add Channel.last_notify_duration, use in sendalerts for prioritization",
+      "date": "2023-07-07T16:40:23+03:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column api_channel.last_notify_duration (NULL)"
+      ],
+      "static_a": "safe",
+      "static_b": "breaks",
+      "linter": false,
+      "linter_rules": [],
+      "oracle_a": "compatible",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 571,
+      "recommendation": "migrate first, then deploy the code",
+      "verdicts": [
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_channel",
+            "column": "last_notify_duration",
+            "nullable": true,
+            "db_default": false,
+            "col_type": "DurationField",
+            "unique": false,
+            "model": "Channel",
+            "field": "last_notify_duration",
+            "path": "hc/api/migrations/0098_channel_last_notify_duration.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column api_channel.last_notify_duration (NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps api_channel.last_notify_duration (Channel.last_notify_duration), which does not exist before the migration; every query on Channel fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 694,
+              "text": "Channel.last_notify_duration maps api_channel.last_notify_duration",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 3.2
+    },
+    {
+      "sha": "34530e0e917243eab8bf01ce9ea7bb2aaf747bae",
+      "subject": "Add Profile.over_limit_date DB field",
+      "date": "2023-06-16T16:28:03+03:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column accounts_profile.over_limit_date (NULL)"
+      ],
+      "static_a": "safe",
+      "static_b": "breaks",
+      "linter": false,
+      "linter_rules": [],
+      "oracle_a": "compatible",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 1296,
+      "recommendation": "migrate first, then deploy the code",
+      "verdicts": [
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "accounts_profile",
+            "column": "over_limit_date",
+            "nullable": true,
+            "db_default": false,
+            "col_type": "DateTimeField",
+            "unique": false,
+            "model": "Profile",
+            "field": "over_limit_date",
+            "path": "hc/accounts/migrations/0047_profile_over_limit_date.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column accounts_profile.over_limit_date (NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps accounts_profile.over_limit_date (Profile.over_limit_date), which does not exist before the migration; every query on Profile fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/accounts/models.py",
+              "line": 87,
+              "text": "Profile.over_limit_date maps accounts_profile.over_limit_date",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 2.9
+    },
+    {
+      "sha": "c3b80b06cf07e3eae6415e49e9fb381aea52cb4c",
+      "subject": "Add Profile.deletion_scheduled_deleted field and UI banner when it's set",
+      "date": "2023-04-28T15:03:04+03:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column accounts_profile.deletion_scheduled_date (NULL)"
+      ],
+      "static_a": "safe",
+      "static_b": "breaks",
+      "linter": false,
+      "linter_rules": [],
+      "oracle_a": "compatible",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 1245,
+      "recommendation": "migrate first, then deploy the code",
+      "verdicts": [
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "accounts_profile",
+            "column": "deletion_scheduled_date",
+            "nullable": true,
+            "db_default": false,
+            "col_type": "DateTimeField",
+            "unique": false,
+            "model": "Profile",
+            "field": "deletion_scheduled_date",
+            "path": "hc/accounts/migrations/0046_profile_deletion_scheduled_date.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column accounts_profile.deletion_scheduled_date (NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps accounts_profile.deletion_scheduled_date (Profile.deletion_scheduled_date), which does not exist before the migration; every query on Profile fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/accounts/models.py",
+              "line": 84,
+              "text": "Profile.deletion_scheduled_date maps accounts_profile.deletion_scheduled_date",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 3.1
+    },
+    {
+      "sha": "a9b084ec9a9f59d5e9d21463c83ab67efd1f23b8",
+      "subject": "Add \"Start Keyword\" filtering for inbound emails",
+      "date": "2023-01-16T13:19:35+02:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column api_check.start_kw (NOT NULL)"
+      ],
+      "static_a": "breaks",
+      "static_b": "breaks",
+      "linter": true,
+      "linter_rules": [
+        "NOT_NULL"
+      ],
+      "oracle_a": "breaks",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 721,
+      "oracle_fail_b": 765,
+      "recommendation": "no safe order: split the change into several releases (see the fixes)",
+      "verdicts": [
+        {
+          "pair": "old code on new schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_check",
+            "column": "start_kw",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "CharField(max_length=200)",
+            "unique": false,
+            "model": "Check",
+            "field": "start_kw",
+            "path": "hc/api/migrations/0096_check_start_kw_alter_channel_kind.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column api_check.start_kw (NOT NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N inserts Check rows without start_kw, which becomes NOT NULL without a database default (5 creation sites outside tests)",
+          "code_dependent": true,
+          "fix": "Add the column as nullable or with a database default (Django >= 5.0: db_default; SQLAlchemy: server_default), backfill, and add NOT NULL in a later release.",
+          "evidence": [
+            {
+              "path": "hc/accounts/views.py",
+              "line": 79,
+              "text": "check = Check(project=project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/api/views.py",
+              "line": 249,
+              "text": "check = Check(project=request.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 460,
+              "text": "check = Check(project=project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 898,
+              "text": "copied = Check(project=check.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            },
+            {
+              "path": "hc/front/views.py",
+              "line": 1130,
+              "text": "dummy = Check(name=\"TEST\", status=\"down\", project=channel.project)",
+              "kind": "dynamic:constructor-missing-new-field"
+            }
+          ]
+        },
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_check",
+            "column": "start_kw",
+            "nullable": false,
+            "db_default": false,
+            "col_type": "CharField(max_length=200)",
+            "unique": false,
+            "model": "Check",
+            "field": "start_kw",
+            "path": "hc/api/migrations/0096_check_start_kw_alter_channel_kind.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column api_check.start_kw (NOT NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps api_check.start_kw (Check.start_kw), which does not exist before the migration; every query on Check fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 165,
+              "text": "Check.start_kw maps api_check.start_kw",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 3.4
+    },
+    {
+      "sha": "7458770b413a9b32b2f18c98bbbdffc5d0eb0aa7",
+      "subject": "Improve alerting logic when run IDs are used",
+      "date": "2022-11-09T19:01:22+02:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column api_check.last_start_rid (NULL)"
+      ],
+      "static_a": "safe",
+      "static_b": "breaks",
+      "linter": false,
+      "linter_rules": [],
+      "oracle_a": "compatible",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 718,
+      "recommendation": "migrate first, then deploy the code",
+      "verdicts": [
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_check",
+            "column": "last_start_rid",
+            "nullable": true,
+            "db_default": false,
+            "col_type": "UUIDField",
+            "unique": false,
+            "model": "Check",
+            "field": "last_start_rid",
+            "path": "hc/api/migrations/0095_check_last_start_rid.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column api_check.last_start_rid (NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps api_check.last_start_rid (Check.last_start_rid), which does not exist before the migration; every query on Check fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 144,
+              "text": "Check.last_start_rid maps api_check.last_start_rid",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 3.1
+    },
+    {
+      "sha": "b6027fa12650827705df40b5f54b58c0b9fd8b96",
+      "subject": "Added support for a \"run id\" parameter (#722)",
+      "date": "2022-11-08T11:34:26+02:00",
+      "status": "ok",
+      "reason": "",
+      "ops": [
+        "add column api_ping.rid (NULL)"
+      ],
+      "static_a": "safe",
+      "static_b": "breaks",
+      "linter": false,
+      "linter_rules": [],
+      "oracle_a": "compatible",
+      "oracle_b": "breaks",
+      "oracle_fail_a": 0,
+      "oracle_fail_b": 164,
+      "recommendation": "migrate first, then deploy the code",
+      "verdicts": [
+        {
+          "pair": "new code on old schema",
+          "op": {
+            "kind": "add_column",
+            "table": "api_ping",
+            "column": "rid",
+            "nullable": true,
+            "db_default": false,
+            "col_type": "UUIDField",
+            "unique": false,
+            "model": "Ping",
+            "field": "rid",
+            "path": "hc/api/migrations/0094_ping_rid_alter_channel_kind.py",
+            "line": 13,
+            "text": "migrations.AddField(",
+            "description": "add column api_ping.rid (NULL)"
+          },
+          "status": "breaks",
+          "confidence": "high",
+          "reason": "version N+1 maps api_ping.rid (Ping.rid), which does not exist before the migration; every query on Ping fails",
+          "code_dependent": true,
+          "fix": "Run the migration before the new code starts (migrate first); this change is not safe as a post-deploy migration.",
+          "evidence": [
+            {
+              "path": "hc/api/models.py",
+              "line": 511,
+              "text": "Ping.rid maps api_ping.rid",
+              "kind": "model"
+            }
+          ]
+        }
+      ],
+      "seconds": 2.9
+    }
+  ]
+}

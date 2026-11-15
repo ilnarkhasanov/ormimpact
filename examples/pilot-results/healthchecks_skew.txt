@@ -1,0 +1,35 @@
+commit     static A oracle A   static B oracle B   linter operations
+6ab5df3516 breaks   breaks     breaks   breaks     flag   drop column accounts_profile.team_limit
+0f78e117ea breaks   breaks     breaks   breaks     flag   add column api_check.filter_default_fail (NOT NULL); add column api_check.filter_http_body
+bf97e3967c risky    compatible safe     compatible flag   alter column api_check.badge_key (nullable: True -> False)
+9edae634c7 breaks   breaks     breaks   breaks     flag   add column api_flip.reason (NOT NULL)
+3e5080d9eb breaks   breaks     safe     compatible flag   drop column api_ping.body
+12bd59b2c1 breaks   breaks     breaks   breaks     flag   add column logs_record.host (NOT NULL)
+d486d2db14 risky    compatible safe     compatible flag   alter column api_notification.code (nullable: True -> False, unique: False -> True)
+1322bb1123 safe     compatible breaks   breaks     ok     add column api_check.badge_key (NULL)
+1b1899052c risky    compatible safe     compatible flag   alter column payments_subscription.user_id (nullable: True -> False)
+c18d2ea1dd safe     compatible breaks   compatible ok     create table logs_record
+a308997b3a safe     compatible safe     compatible ok     add column payments_subscription.next_billing_date (NULL); add column payments_subscriptio
+4147bd951d breaks   breaks     safe     compatible flag   alter column api_channel.disabled (nullable: True -> False)
+47ec070aee risky    compatible safe     compatible flag   alter column accounts_profile.user_id (nullable: True -> False)
+368e76016d safe     compatible breaks   breaks     ok     add column api_channel.last_notify_duration (NULL)
+34530e0e91 safe     compatible breaks   breaks     ok     add column accounts_profile.over_limit_date (NULL)
+c3b80b06cf safe     compatible breaks   breaks     ok     add column accounts_profile.deletion_scheduled_date (NULL)
+a9b084ec9a breaks   breaks     breaks   breaks     flag   add column api_check.start_kw (NOT NULL)
+7458770b41 safe     compatible breaks   breaks     ok     add column api_check.last_start_rid (NULL)
+b6027fa126 safe     compatible breaks   breaks     ok     add column api_ping.rid (NULL)
+
+commits with new migrations: 19, with schema operations: 19
+static: pair A breaks 7, pair B breaks 12, no safe order 5; linter flags 11
+
+== old code on new schema: 19 commits with an oracle verdict, 7 break
+detector                    TP  FP  FN  TN  precision  recall
+static (breaks)              7   0   0  12     100.0%  100.0%
+static (breaks or risky)     7   4   0   8      63.6%  100.0%
+linter                       7   4   0   8      63.6%  100.0%
+
+== new code on old schema: 19 commits with an oracle verdict, 11 break
+detector                    TP  FP  FN  TN  precision  recall
+static (breaks)             11   1   0   7      91.7%  100.0%
+static (breaks or risky)    11   1   0   7      91.7%  100.0%
+linter (same flag)           5   6   6   2      45.5%   45.5%
